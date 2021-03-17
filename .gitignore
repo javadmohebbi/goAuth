@@ -13,3 +13,13 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+
+
+
+# sqlite test db
+.go-auth.db
+
+
+#vscode
+.vscode
