@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 
 	"github.com/goAuth"
 	"github.com/goAuth/model"
@@ -50,16 +49,24 @@ func main() {
 
 	// load user with groups
 	db.Set("gorm:auto_preload", true).Where("id = ?", adminUser.ID).First(&adminUser)
-	log.Println(adminUser)
 
+	// create new requested policies
 	ga := goAuth.Init([]goAuth.GoAuthPolicy{
+		{
+			Section: "admin.dashboard.*",
+			UGO:     15,
+		},
 		{
 			Section: "admin.dashboard.*",
 			UGO:     14,
 		},
 		{
+			Section: "app.ticket.*",
+			UGO:     6,
+		},
+		{
 			Section: "app.user.*",
-			UGO:     14,
+			UGO:     7,
 		},
 	})
 
