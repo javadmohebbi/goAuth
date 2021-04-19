@@ -109,12 +109,17 @@ func main() {
 }
 
 // insert some test data into database
+// an example of preparing datatbase
+// model.User{}, model.Group{}, model.Policy{} are mandatory
+// fields in your db model, you must first have this models &
+// then you can use this package, OR use the above sample
+// to make your own!
 func insertTestData(db *gorm.DB) (model.User, model.User) {
 
 	// admin group
 	adminGroup := model.Group{
 		Name: "administrator",
-		Desc: "Unlimited group which has access to any thing",
+		Desc: "Unlimited group which has access to every thing",
 	}
 	// create admin group if not exists
 	db.Debug().Where("name = ?", adminGroup.Name).First(&adminGroup)
