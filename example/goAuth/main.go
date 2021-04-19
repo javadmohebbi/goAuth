@@ -13,8 +13,8 @@ import (
 func main() {
 
 	// command line argument for db path
-	// dbPath := flag.String("path", "/tmp/go-auth.db", "Path to sqlite database")
-	dbPath := flag.String("path", "/home/mj/Projects/goAuth/go-auth.db", "Path to sqlite database")
+	dbPath := flag.String("path", "/tmp/go-auth.db", "Path to sqlite database")
+	// dbPath := flag.String("path", "/home/mj/Projects/goAuth/go-auth.db", "Path to sqlite database")
 
 	// parse the command line arguments
 	flag.Parse()
