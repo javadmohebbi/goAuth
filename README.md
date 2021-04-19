@@ -17,7 +17,7 @@ go get github.com/javadmohebbi/goAuth
 ```
 
 
-### Basic Example
+### - Basic Example
 ```
     //...
 
