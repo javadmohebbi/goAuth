@@ -25,7 +25,7 @@ func (ga *GoAuth) GetPermissions(neededSection string) (bool, bool, bool, bool) 
 		// check if has access to the section
 		if phase1 = nSection(neededSection).HasAccess(p.Section); phase1 {
 
-			_r, _w, _u, _d := p.UGO.Bools()
+			_r, _w, _u, _d := p.Perm.Bools()
 
 			// return on first match
 			return _r, _w, _u, _d

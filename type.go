@@ -43,14 +43,14 @@ func (ns nSection) HasAccess(policySection string) bool {
 // struct to store user policies
 type GoAuthPolicy struct {
 	Section string `json:"section"`
-	UGO     UGO    `json:"ugo"`
+	Perm    Perm   `json:"perm"`
 }
 
-// UGO
-type UGO uint
+// Perm
+type Perm uint
 
 // it will get string int
-func (u UGO) binaryString() string {
+func (u Perm) binaryString() string {
 	// string bytes
 	s := strconv.FormatInt(int64(u), 2)
 	switch len(s) {
@@ -74,7 +74,7 @@ func (u UGO) binaryString() string {
 }
 
 // Get boolean r,w,u,d
-func (u UGO) Bools() (bool, bool, bool, bool) {
+func (u Perm) Bools() (bool, bool, bool, bool) {
 	bs := u.binaryString()
 
 	if len(bs) != 4 {
@@ -100,7 +100,7 @@ func (u UGO) Bools() (bool, bool, bool, bool) {
 }
 
 // Get boolean r,w,u,d
-func (u UGO) String() string {
+func (u Perm) String() string {
 	bs := u.binaryString()
 
 	if len(bs) != 4 {
