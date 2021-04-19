@@ -1,4 +1,4 @@
-package model
+package goAuth
 
 import "gorm.io/gorm"
 

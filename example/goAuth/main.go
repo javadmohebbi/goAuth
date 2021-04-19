@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/javadmohebbi/goAuth"
-	"github.com/javadmohebbi/goAuth/model"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -30,22 +30,22 @@ func main() {
 	}
 
 	// migrate db
-	db.AutoMigrate(&model.User{}, &model.Group{}, &model.Policy{})
+	db.AutoMigrate(&goAuth.User{}, &goAuth.Group{}, &goAuth.Policy{})
 
 	// insert test data
 	adminUser, normalUser := insertTestData(db)
 
 	/**
 	Above steps is an example of preparing datatbase
-	model.User{}, model.Group{}, model.Policy{} are mandatory
+	goAuth.User{}, goAuth.Group{}, goAuth.Policy{} are mandatory
 	fields in your db model, you must first have this models &
 	then you can use this package, OR use the above sample
 	to make your own!
 	**/
 
 	// fetch user's policies from database
-	var adminPolicies []model.Policy
-	var userPolicies []model.Policy
+	var adminPolicies []goAuth.Policy
+	var userPolicies []goAuth.Policy
 
 	// admin
 	db.Raw(`
@@ -111,14 +111,14 @@ func main() {
 
 // insert some test data into database
 // an example of preparing datatbase
-// model.User{}, model.Group{}, model.Policy{} are mandatory
+// goAuth.User{}, goAuth.Group{}, goAuth.Policy{} are mandatory
 // fields in your db model, you must first have this models &
 // then you can use this package, OR use the above sample
 // to make your own!
-func insertTestData(db *gorm.DB) (model.User, model.User) {
+func insertTestData(db *gorm.DB) (goAuth.User, goAuth.User) {
 
 	// admin group
-	adminGroup := model.Group{
+	adminGroup := goAuth.Group{
 		Name: "administrator",
 		Desc: "Unlimited group which has access to every thing",
 	}
@@ -129,7 +129,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 	}
 
 	// public group
-	publicGroup := model.Group{
+	publicGroup := goAuth.Group{
 		Name: "public",
 		Desc: "Limited group which has access to some specific sections",
 	}
@@ -139,7 +139,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 		db.Create(&publicGroup)
 	}
 
-	plcs := []model.Policy{
+	plcs := []goAuth.Policy{
 
 		// admin
 		{
@@ -162,7 +162,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 	}
 
 	for _, p := range plcs {
-		var _p model.Policy
+		var _p goAuth.Policy
 		db.Where("section = ? AND perm = ? AND group_id = ?", p.Section, p.Perm, p.GroupID).First(&_p)
 		if _p.ID == 0 {
 			db.Create(&p)
@@ -170,7 +170,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 	}
 
 	// admin test user
-	userAdmin := model.User{
+	userAdmin := goAuth.User{
 		Username: "mjmohebbiAdmin",
 		Password: "hashed-secret",
 
@@ -179,7 +179,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 	}
 
 	// normal test user
-	userNormal := model.User{
+	userNormal := goAuth.User{
 		Username: "mjmohebbiNormal",
 		Password: "hashed-secret",
 
@@ -195,7 +195,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 	}
 
 	// add admin user to administrator group
-	db.Debug().Model(&userAdmin).Association("Group").Append([]*model.Group{
+	db.Debug().Model(&userAdmin).Association("Group").Append([]*goAuth.Group{
 		&adminGroup,
 	})
 
@@ -207,7 +207,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 	}
 
 	// add normal user to public group
-	db.Debug().Model(&userNormal).Association("Group").Append([]*model.Group{
+	db.Debug().Model(&userNormal).Association("Group").Append([]*goAuth.Group{
 		&publicGroup,
 	})
 
