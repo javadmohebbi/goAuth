@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/goAuth"
-	"github.com/goAuth/model"
+	"github.com/javadmohebbi/goAuth"
+	"github.com/javadmohebbi/goAuth/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

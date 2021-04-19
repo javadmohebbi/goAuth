@@ -1,4 +1,4 @@
-module github.com/goAuth
+module github.com/javadmohebbi/goAuth
 
 go 1.15
 
