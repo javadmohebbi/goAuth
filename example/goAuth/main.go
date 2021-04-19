@@ -49,7 +49,7 @@ func main() {
 
 	// admin
 	db.Raw(`
-		SELECT p.section, p.ugo FROM policies as p
+		SELECT p.section, p.perm FROM policies as p
 		JOIN groups as g ON g.id = p.group_id
 		JOIN group_users as gu ON g.id = gu.group_id
 		WHERE gu.user_id = ?
@@ -57,7 +57,7 @@ func main() {
 
 	// public
 	db.Debug().Raw(`
-		SELECT p.section, p.ugo FROM policies as p
+		SELECT p.section, p.perm FROM policies as p
 		JOIN groups as g ON g.id = p.group_id
 		JOIN group_users as gu ON g.id = gu.group_id
 		WHERE gu.user_id = ?
@@ -72,14 +72,14 @@ func main() {
 	// initialize admin goAuthPolicy
 	for _, p := range adminPolicies {
 		gaAdminPS = append(gaAdminPS, goAuth.GoAuthPolicy{
-			Section: p.Section, UGO: goAuth.UGO(p.UGO),
+			Section: p.Section, Perm: goAuth.Perm(p.Perm),
 		})
 	}
 
 	// initialize user goAuthPolicy
 	for _, p := range userPolicies {
 		gaUserPS = append(gaUserPS, goAuth.GoAuthPolicy{
-			Section: p.Section, UGO: goAuth.UGO(p.UGO),
+			Section: p.Section, Perm: goAuth.Perm(p.Perm),
 		})
 	}
 
@@ -144,26 +144,26 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 		// admin
 		{
 			Section: "*",
-			UGO:     15, // rwud
+			Perm:    15, // rwud
 			GroupID: adminGroup.ID,
 		},
 
 		// normal
 		{
 			Section: "app.users",
-			UGO:     14, // rwu-
+			Perm:    14, // rwu-
 			GroupID: publicGroup.ID,
 		},
 		{
 			Section: "app.users.orders",
-			UGO:     8, // r---
+			Perm:    8, // r---
 			GroupID: publicGroup.ID,
 		},
 	}
 
 	for _, p := range plcs {
 		var _p model.Policy
-		db.Where("section = ? AND ugo = ? AND group_id = ?", p.Section, p.UGO, p.GroupID).First(&_p)
+		db.Where("section = ? AND perm = ? AND group_id = ?", p.Section, p.Perm, p.GroupID).First(&_p)
 		if _p.ID == 0 {
 			db.Create(&p)
 		}
