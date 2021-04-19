@@ -9,7 +9,7 @@ type Group struct {
 
 	Policy []Policy
 
-	User []*User `gorm:"many2many;group_users"`
+	User []*User `gorm:"many2many:group_users"`
 
 	gorm.Model
 }

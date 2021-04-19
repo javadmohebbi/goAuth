@@ -28,7 +28,7 @@ type Policy struct {
 	// ----------------------------------------------
 	// *rwdu => Read Write Update Delete
 	// ----------------------------------------------
-	UGO string
+	UGO uint
 
 	// Group ID
 	GroupID uint

@@ -10,23 +10,30 @@ import (
 // all of the major functionalities of this
 // package has impelemented in this struct
 type GoAuth struct {
-	NeededSection NeededSection  `json:"needed"`
-	Policies      []GoAuthPolicy `json:"policies"`
+	Policies []GoAuthPolicy `json:"policies"`
+
+	neededSection nSection
 }
 
 // this struct uses when
 // a user permission needed to be checked
-type NeededSection string
+type nSection string
 
 // check if user's needed section included
 // in the policy
-func (ns NeededSection) HasAccess(policySection string) bool {
+func (ns nSection) HasAccess(policySection string) bool {
 
 	// create mask based on policy
 	msk := strings.ReplaceAll(policySection, "*", ".*")
 
 	// chekck if matched
-	matched, _ := regexp.MatchString(msk, string(ns))
+	// matched, _ := regexp.MatchString(msk, string(ns))
+	re, err := regexp.Compile("^" + msk + "$")
+	if err != nil {
+		return false
+	}
+
+	matched := re.Match([]byte(string(ns)))
 
 	// return boolean
 	return matched

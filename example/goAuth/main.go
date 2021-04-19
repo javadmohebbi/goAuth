@@ -35,10 +35,6 @@ func main() {
 	// insert test data
 	adminUser, normalUser := insertTestData(db)
 
-	fmt.Printf("Two users have prepared for tests:\n\t1- %v (administrator)\n\t2- %v (normal user)\n",
-		adminUser.Username, normalUser.Username,
-	)
-
 	/**
 	Above steps is an example of preparing datatbase
 	model.User{}, model.Group{}, model.Policy{} are mandatory
@@ -47,32 +43,67 @@ func main() {
 	to make your own!
 	**/
 
-	// load user with groups
-	db.Set("gorm:auto_preload", true).Where("id = ?", adminUser.ID).First(&adminUser)
+	// fetch user's policies from database
+	var adminPolicies []model.Policy
+	var userPolicies []model.Policy
 
-	// create new requested policies
-	ga := goAuth.Init([]goAuth.GoAuthPolicy{
-		{
-			Section: "admin.dashboard.*",
-			UGO:     15,
-		},
-		{
-			Section: "admin.dashboard.*",
-			UGO:     14,
-		},
-		{
-			Section: "app.ticket.*",
-			UGO:     6,
-		},
-		{
-			Section: "app.user.*",
-			UGO:     7,
-		},
-	})
+	// admin
+	db.Raw(`
+		SELECT p.section, p.ugo FROM policies as p
+		JOIN groups as g ON g.id = p.group_id
+		JOIN group_users as gu ON g.id = gu.group_id
+		WHERE gu.user_id = ?
+	`, adminUser.ID).Scan(&adminPolicies)
 
-	for _, p := range ga.Policies {
-		fmt.Println(p.UGO.Bools())
-		fmt.Println(p.UGO)
+	// public
+	db.Debug().Raw(`
+		SELECT p.section, p.ugo FROM policies as p
+		JOIN groups as g ON g.id = p.group_id
+		JOIN group_users as gu ON g.id = gu.group_id
+		WHERE gu.user_id = ?
+	`, normalUser.ID).Scan(&userPolicies)
+
+	// prepare goAuth
+	// and feed it with the fetched policies
+	var gaAdminPS []goAuth.GoAuthPolicy
+	var gaUserPS []goAuth.GoAuthPolicy
+
+	// initialize admin goAuthPolicy
+	for _, p := range adminPolicies {
+		gaAdminPS = append(gaAdminPS, goAuth.GoAuthPolicy{
+			Section: p.Section, UGO: goAuth.UGO(p.UGO),
+		})
+	}
+
+	// initialize user goAuthPolicy
+	for _, p := range userPolicies {
+		gaUserPS = append(gaUserPS, goAuth.GoAuthPolicy{
+			Section: p.Section, UGO: goAuth.UGO(p.UGO),
+		})
+	}
+
+	// test permissions
+	// testPermissions := []string{"app.users", "admin.dashboard", "app.users.orders", "app.networks", "app.infrastructures.datacenter"}
+	testPermissions := []string{"app.users.orders", "app.upload", "admin.dashboard.create"}
+
+	fmt.Printf("\n\n\n\n- - - - - - - - - - - - - - - - - - - - - - - - -\n\n\n\n")
+	fmt.Printf("Permissions for 'Admin' are: \n\n")
+	// test admin permission
+	for _, tp := range testPermissions {
+		r, w, u, d := goAuth.Init(gaAdminPS).GetPermissions(tp)
+		fmt.Printf("'%v' permission for %v:\n\tRead:%v\tWrite:%v\tUpdate:%v\tDelete:%v\n\n",
+			adminUser.Username, tp, r, w, u, d,
+		)
+	}
+
+	fmt.Printf("\n- - - - - - - - - - - - - - - - - - - - - - - - -\n\n\n\n")
+	fmt.Printf("Permissions for 'Users' are: \n\n")
+	// test user permission
+	for _, tp := range testPermissions {
+		r, w, u, d := goAuth.Init(gaUserPS).GetPermissions(tp)
+		fmt.Printf("'%v' permission for %v:\n\tRead:%v\tWrite:%v\tUpdate:%v\tDelete:%v\n\n",
+			normalUser.Username, tp, r, w, u, d,
+		)
 	}
 
 }
@@ -86,7 +117,7 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 		Desc: "Unlimited group which has access to any thing",
 	}
 	// create admin group if not exists
-	db.Where("name = ?", adminGroup.Name).First(&adminGroup)
+	db.Debug().Where("name = ?", adminGroup.Name).First(&adminGroup)
 	if adminGroup.ID == 0 {
 		db.Create(&adminGroup)
 	}
@@ -97,34 +128,39 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 		Desc: "Limited group which has access to some specific sections",
 	}
 	// create public group if not exists
-	db.Where("name = ?", publicGroup.Name).First(&publicGroup)
+	db.Debug().Where("name = ?", publicGroup.Name).First(&publicGroup)
 	if publicGroup.ID == 0 {
 		db.Create(&publicGroup)
 	}
 
-	// add all access policy
-	policyAdmin := model.Policy{
-		Section: "*",
-		UGO:     "15", // rwud
-		GroupID: adminGroup.ID,
-	}
-	db.Create(&policyAdmin)
+	plcs := []model.Policy{
 
-	// add all access policy
-	policiesPublic := []model.Policy{
+		// admin
 		{
-			Section: "app.users.*",
-			UGO:     "14", // rwu-
+			Section: "*",
+			UGO:     15, // rwud
+			GroupID: adminGroup.ID,
+		},
+
+		// normal
+		{
+			Section: "app.users",
+			UGO:     14, // rwu-
 			GroupID: publicGroup.ID,
 		},
 		{
-			Section: "app.orders.*",
-			UGO:     "8", // r---
+			Section: "app.users.orders",
+			UGO:     8, // r---
 			GroupID: publicGroup.ID,
 		},
 	}
-	for _, p := range policiesPublic {
-		db.Create(&p)
+
+	for _, p := range plcs {
+		var _p model.Policy
+		db.Where("section = ? AND ugo = ? AND group_id = ?", p.Section, p.UGO, p.GroupID).First(&_p)
+		if _p.ID == 0 {
+			db.Create(&p)
+		}
 	}
 
 	// admin test user
@@ -147,25 +183,25 @@ func insertTestData(db *gorm.DB) (model.User, model.User) {
 
 	// admin
 	// create admin user if not exists
-	db.Where("username = ?", userAdmin.Username).First(&userAdmin)
+	db.Debug().Where("username = ?", userAdmin.Username).First(&userAdmin)
 	if userAdmin.ID == 0 {
 		db.Create(&userAdmin)
 	}
 
 	// add admin user to administrator group
-	db.Model(&userAdmin).Association("Group").Append([]*model.Group{
+	db.Debug().Model(&userAdmin).Association("Group").Append([]*model.Group{
 		&adminGroup,
 	})
 
 	// public
 	// create normal user if not exists
-	db.Where("username = ?", userNormal.Username).First(&userNormal)
+	db.Debug().Where("username = ?", userNormal.Username).First(&userNormal)
 	if userNormal.ID == 0 {
 		db.Create(&userNormal)
 	}
 
 	// add normal user to public group
-	db.Model(&userNormal).Association("Group").Append([]*model.Group{
+	db.Debug().Model(&userNormal).Association("Group").Append([]*model.Group{
 		&publicGroup,
 	})
 

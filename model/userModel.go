@@ -9,7 +9,7 @@ type User struct {
 	FirstName string
 	LasttName string
 
-	Group []*Group `gorm:"many2many;group_users"`
+	Group []*Group `gorm:"many2many:group_users"`
 
 	/*
 		.
