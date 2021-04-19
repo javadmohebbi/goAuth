@@ -110,3 +110,30 @@ go get github.com/javadmohebbi/goAuth
     }
 
 ```
+
+
+
+### - Complete Example
+In this example You can see how I prepare database for managing user's permissions and also using `gorm` module, I could use `AutoMigrate` method for futher changes.
+This example might not be complete but this can be a good place to start for those who are looking for a solution for their Authorization/Authentication database structure.
+
+
+To get access to this example [click here](https://github.com/javadmohebbi/goAuth/blob/main/example/goAuth/main.go).
+
+
+
+
+
+### The Feature
+There are many features I want to add to this modules are many, but some of them are:
+- Providing a dockerized HTTP(S) JSON/ProtoBuf app to handle all Authentication/Authorization-related things
+- Active Directory/LDAP integration
+  - Let user login from AD/LDAP
+  - Map AD/LDAP groups to `goAuth` groups
+- Integrate with other platforms for user registeration & signin
+  - Google
+  - LinkedIn
+  - Facebook
+  - Github
+  - ...
+
