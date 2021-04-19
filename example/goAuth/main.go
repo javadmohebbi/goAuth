@@ -64,6 +64,7 @@ func main() {
 	`, normalUser.ID).Scan(&userPolicies)
 
 	// prepare goAuth
+	//
 	// and feed it with the fetched policies
 	var gaAdminPS []goAuth.GoAuthPolicy
 	var gaUserPS []goAuth.GoAuthPolicy
