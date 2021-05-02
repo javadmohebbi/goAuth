@@ -44,33 +44,33 @@ go get github.com/javadmohebbi/goAuth
             Section string `json:"section"`
 
 
-            // Perm is an unsigned integer and must be between 0, 15
-            // This is like mode system in extened file system in linux:
-            //      - check 'man chmod'
-            /***********************************************************
-            // Permission Description
-            // ----------------------------------------------
-            //   #   Permission           rwud*      Binary
-            // ----------------------------------------------
-            //   0   none                 ----       0000
-            //   1                        ---d       0001
-            //   2                        --u-       0010
-            //   3                        --ud       0011
-            //   4                        -w--       0100
-            //   5                        -w-d       0101
-            //   6                        -wu-       0110
-            //   7                        -wud       0111
-            //   8                        r---       1000
-            //   9                        r--d       1001
-            //   10                       r-u-       1010
-            //   11                       r-ud       1011
-            //   12                       rw--       1100
-            //   13                       rw-d       1101
-            //   14                       rwu-       1110
-            //   15                       rwud       1111
-            // ----------------------------------------------
-            // *rwdu => Read Write Update Delete
-            // ----------------------------------------------
+// Perm is an unsigned integer and must be between 0, 15
+// This is like mode system in extened file system in linux:
+//      - check 'man chmod'
+/***********************************************************
+// Permission Description
+// ----------------------------------------------
+//   #   Permission           rwud*      Binary
+// ----------------------------------------------
+//   0   none                 ----       0000
+//   1                        ---d       0001
+//   2                        --u-       0010
+//   3                        --ud       0011
+//   4                        -w--       0100
+//   5                        -w-d       0101
+//   6                        -wu-       0110
+//   7                        -wud       0111
+//   8                        r---       1000
+//   9                        r--d       1001
+//   10                       r-u-       1010
+//   11                       r-ud       1011
+//   12                       rw--       1100
+//   13                       rw-d       1101
+//   14                       rwu-       1110
+//   15                       rwud       1111
+// ----------------------------------------------
+// *rwdu => Read Write Update Delete
+// ----------------------------------------------
             Perm     Perm    `json:"perm"`
 
         }
