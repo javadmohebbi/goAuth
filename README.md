@@ -16,6 +16,8 @@ To use this `go module` you must run the further command.
 go get github.com/javadmohebbi/goAuth
 ```
 
+Visit this blog post to read a [How-To guide](https://blog.openintelligence24.com/opensource/golang/authentication-authorization-for-golang-applications-using-goauth/).
+
 
 ### - Basic Example
 ```
@@ -130,7 +132,7 @@ There are many features I want to add to this modules are many, but some of them
 - Active Directory/LDAP integration
   - Let user login from AD/LDAP
   - Map AD/LDAP groups to `goAuth` groups
-- Integrate with other platforms for user registeration & signin
+- Integrate with other platforms for user registration & signin
   - Google
   - LinkedIn
   - Facebook
