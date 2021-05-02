@@ -26,6 +26,10 @@ func (ns nSection) HasAccess(policySection string) bool {
 	// create mask based on policy
 	msk := strings.ReplaceAll(policySection, "*", ".*")
 
+	// in order to prevent ..*
+	// simplest way to do all the things we want ;-)
+	msk = strings.ReplaceAll(msk, "..*", ".*")
+
 	// chekck if matched
 	// matched, _ := regexp.MatchString(msk, string(ns))
 	re, err := regexp.Compile("^" + msk + "$")
