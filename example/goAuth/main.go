@@ -49,19 +49,19 @@ func main() {
 
 	// admin
 	db.Raw(`
-		SELECT p.section, p.perm FROM policies as p
-		JOIN groups as g ON g.id = p.group_id
-		JOIN group_users as gu ON g.id = gu.group_id
-		WHERE gu.user_id = ?
-	`, adminUser.ID).Scan(&adminPolicies)
+	SELECT p.section, p.perm FROM policies as p
+	JOIN groups as g ON g.id = p.group_id
+	JOIN group_users as gu ON g.id = gu.group_id
+	WHERE gu.user_id = ?
+`, adminUser.ID).Scan(&adminPolicies)
 
 	// public
 	db.Debug().Raw(`
-		SELECT p.section, p.perm FROM policies as p
-		JOIN groups as g ON g.id = p.group_id
-		JOIN group_users as gu ON g.id = gu.group_id
-		WHERE gu.user_id = ?
-	`, normalUser.ID).Scan(&userPolicies)
+	SELECT p.section, p.perm FROM policies as p
+	JOIN groups as g ON g.id = p.group_id
+	JOIN group_users as gu ON g.id = gu.group_id
+	WHERE gu.user_id = ?
+`, normalUser.ID).Scan(&userPolicies)
 
 	// prepare goAuth
 	//
