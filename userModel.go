@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -109,6 +110,24 @@ func (u *User) beforeSaveAndCreate(db *gorm.DB) (err error) {
 	hashed := string(b)
 	u.Password = hashed
 
+	// validate & return
+	return u.metaValidator(db)
+}
+
+// validate user metda data validation
+func (u *User) metaValidator(db *gorm.DB) (err error) {
+
+	// username validation
+	match, _ := regexp.MatchString(`^[a-zA-Z0-9]+((_|-|\.)?[a-zA-Z0-9])*$`, u.Username)
+	if !match {
+		return errors.New(fmt.Sprintf("Invalid username '%s'", u.Username))
+	}
+
+	// password validation
+	if psErr := u.passwordValidator(); psErr != nil {
+		return psErr
+	}
+
 	for k, v := range u.MetaData {
 		var f UserInfoField
 		db.Where("field_name = ?", k).First(&f)
@@ -145,5 +164,57 @@ func (u *User) beforeSaveAndCreate(db *gorm.DB) (err error) {
 			return errors.New(fmt.Sprintf("Uknown field name '%s'", k))
 		}
 	}
+
 	return nil
+}
+
+// validate password
+func (u *User) passwordValidator() (err error) {
+	letters := 0
+	specials := 0
+	numbers := 0
+
+	checkNum, checkUpper, checkSpecial, checkLetter := false, false, false, false
+
+	if len(u.Password) < 8 || len(u.Password) > 20 {
+		return errors.New("Password length be between 8 and 20 character")
+	}
+
+	for _, c := range u.Password {
+		switch {
+		case unicode.IsNumber(c):
+			checkNum = true
+			numbers++
+		case unicode.IsUpper(c):
+			checkUpper = true
+			letters++
+		case unicode.IsPunct(c) || unicode.IsSymbol(c):
+			checkSpecial = true
+			specials++
+		case unicode.IsLetter(c) || c == ' ':
+			checkLetter = true
+			letters++
+		default:
+			//return false, false, false, false
+		}
+	}
+
+	if !checkNum {
+		return errors.New("Password must contain at least 1 number")
+	}
+
+	if !checkUpper {
+		return errors.New("Password must contain at least 1 capital letter")
+	}
+
+	if !checkLetter {
+		return errors.New("Password must contain at least 1 letter")
+	}
+
+	if !checkSpecial {
+		return errors.New("Password must contain at least 1 special characters")
+	}
+
+	return nil
+
 }
