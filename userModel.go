@@ -3,9 +3,12 @@ package goAuth
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
+	"time"
 	"unicode"
 
+	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -32,12 +35,14 @@ type User struct {
 		.
 	*/
 
-	UserInfoFieldDetail []UserInfoFieldDetail
+	UserInfoFieldDetail []UserInfoFieldDetail `json:"-"`
 
-	MetaData map[string]interface{} `gorm:"-" json:"-"`
+	MetaData map[string]interface{} `gorm:"-" json:"meta_data"`
 
 	// this ID will
 	_id uint `gorm:"-"`
+
+	dontFilterPassword bool
 
 	gorm.Model
 }
@@ -45,13 +50,21 @@ type User struct {
 // This will be called
 // after gorm save function
 func (u *User) BeforeSave(db *gorm.DB) (err error) {
-	return u.beforeSaveAndCreate(db)
+	// return errors.New("Save not supported. Use 'Update' instead")
+
+	return nil
+}
+
+// This will be called
+// after gorm update function
+func (u *User) BeforeUpdate(db *gorm.DB) (err error) {
+	return u.beforeUpdate(db)
 }
 
 // This will be called
 // after gorm create function
 func (u *User) BeforeCreate(db *gorm.DB) (err error) {
-	return u.beforeSaveAndCreate(db)
+	return u.beforeCreate(db)
 }
 
 // This will be called
@@ -80,10 +93,48 @@ func (u *User) AfterCreate(db *gorm.DB) (err error) {
 	return nil
 }
 
+// run after update
+func (u *User) AfterUpdate(db *gorm.DB) (err error) {
+	for k, v := range u.MetaData {
+		var f UserInfoField
+		db.Where("field_name = ?", k).First(&f)
+		if f.ID != 0 {
+
+			var fd UserInfoFieldDetail
+
+			db.Where("user_info_field_id = ? AND user_id = ?", f.ID, u.ID).First(&fd)
+
+			value := fmt.Sprintf("%s", v)
+
+			if fd.ID != 0 {
+				// update
+				db.Model(&fd).Updates(map[string]interface{}{
+					"value": value,
+				})
+			} else {
+				// create
+				fd_new := UserInfoFieldDetail{
+					UserInfoFieldID: f.ID,
+					UserID:          u.ID,
+					Value:           value,
+				}
+
+				db.Create(&fd_new)
+				u.UserInfoFieldDetail = append(u.UserInfoFieldDetail, fd)
+			}
+
+		}
+	}
+
+	return nil
+}
+
 // run after find
 func (u *User) AfterFind(db *gorm.DB) (err error) {
 	// filter password fileds
-	u.Password = "__FILTERED__"
+	if !u.dontFilterPassword {
+		u.Password = ""
+	}
 	u.UserInfoFieldDetail = []UserInfoFieldDetail{}
 
 	var fds []UserInfoFieldDetail
@@ -102,8 +153,13 @@ func (u *User) AfterFind(db *gorm.DB) (err error) {
 	return nil
 }
 
-// this whill be called before save & update
-func (u *User) beforeSaveAndCreate(db *gorm.DB) (err error) {
+// this whill be called before create
+func (u *User) beforeCreate(db *gorm.DB) (err error) {
+
+	// check credential validator
+	if cErr := u.credentialValidator(); cErr != nil {
+		return cErr
+	}
 
 	// hash the password
 	b, _ := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
@@ -114,20 +170,30 @@ func (u *User) beforeSaveAndCreate(db *gorm.DB) (err error) {
 	return u.metaValidator(db)
 }
 
+// this whill be called before update
+func (u *User) beforeUpdate(db *gorm.DB) (err error) {
+
+	// check if need to change user password
+	// since we set password to "" inside AfterFind function
+	// if u.password is not empty, it means user has provided the new password
+	if u.Password != "" {
+		// check password validation
+		if pErr := u.passwordValidator(); pErr != nil {
+			return pErr
+		}
+
+		// hash the password
+		b, _ := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
+		hashed := string(b)
+		u.Password = hashed
+	}
+
+	// validate & return
+	return u.metaValidator(db)
+}
+
 // validate user metda data validation
 func (u *User) metaValidator(db *gorm.DB) (err error) {
-
-	// username validation
-	match, _ := regexp.MatchString(`^[a-zA-Z0-9]+((_|-|\.)?[a-zA-Z0-9])*$`, u.Username)
-	if !match {
-		return errors.New(fmt.Sprintf("Invalid username '%s'", u.Username))
-	}
-
-	// password validation
-	if psErr := u.passwordValidator(); psErr != nil {
-		return psErr
-	}
-
 	for k, v := range u.MetaData {
 		var f UserInfoField
 		db.Where("field_name = ?", k).First(&f)
@@ -148,7 +214,11 @@ func (u *User) metaValidator(db *gorm.DB) (err error) {
 				}
 
 				var fd UserInfoFieldDetail
-				db.Where("value = ? AND user_info_field_id = ?", value, f.ID).First(&fd)
+				if u.ID == 0 {
+					db.Where("value = ? AND user_info_field_id = ?", value, f.ID).First(&fd)
+				} else {
+					db.Where("value = ? AND user_info_field_id = ? and user_id != ?", value, f.ID, u.ID).First(&fd)
+				}
 				if fd.ID != 0 {
 					return errors.New(fmt.Sprintf("Value of field '%s' must be unique, but the provided value '%s' is duplicated!", k, value))
 				}
@@ -168,6 +238,22 @@ func (u *User) metaValidator(db *gorm.DB) (err error) {
 	return nil
 }
 
+// validate credentials when creating user
+func (u *User) credentialValidator() (err error) {
+	// username validation
+	match, _ := regexp.MatchString(`^[a-zA-Z0-9]+((_|-|\.)?[a-zA-Z0-9])*$`, u.Username)
+	if !match {
+		return errors.New(fmt.Sprintf("Invalid username '%s'", u.Username))
+	}
+
+	// password validation
+	if psErr := u.passwordValidator(); psErr != nil {
+		return psErr
+	}
+
+	return nil
+}
+
 // validate password
 func (u *User) passwordValidator() (err error) {
 	letters := 0
@@ -176,7 +262,7 @@ func (u *User) passwordValidator() (err error) {
 
 	checkNum, checkUpper, checkSpecial, checkLetter := false, false, false, false
 
-	if len(u.Password) < 8 || len(u.Password) > 20 {
+	if len(u.Password) < 8 && len(u.Password) > 20 {
 		return errors.New("Password length be between 8 and 20 character")
 	}
 
@@ -216,5 +302,33 @@ func (u *User) passwordValidator() (err error) {
 	}
 
 	return nil
+
+}
+
+// check user credentials and parse new jwt token
+func (u *User) SignIn(db *gorm.DB) (token string, err error) {
+	var _u User
+	_u.dontFilterPassword = true
+	db.Where("username = ?", u.Username).First(&_u)
+
+	if _u.ID == 0 {
+		return "", errors.New("Provided credentials is not valid")
+	} else {
+		if err := bcrypt.CompareHashAndPassword([]byte(_u.Password), []byte(u.Password)); err != nil {
+			return "", errors.New("Provided credentials is not valid.")
+		}
+	}
+
+	tk := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":         _u.ID,
+		"username":   u.Username,
+		"created_at": time.Now(),
+	})
+
+	_u.Password = ""
+	u.dontFilterPassword = false
+	u = &_u
+
+	return tk.SignedString([]byte(os.Getenv(GOAUTH_JWT_SECRET_KEY)))
 
 }
