@@ -3,9 +3,9 @@ package goAuth
 import "gorm.io/gorm"
 
 type Group struct {
-	Name string `gorm:"not null;unique"`
+	Name string `gorm:"type:nvarchar(100);not null;unique"`
 
-	Desc string
+	Desc string `gorm:"type:nvarchar(100);"`
 
 	Policy []Policy
 

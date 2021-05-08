@@ -175,7 +175,7 @@ func insertTestData(db *gorm.DB) (goAuth.User, goAuth.User) {
 		Password: "hashed-secret",
 
 		FirstName: "M. Javad",
-		LasttName: "Mohebbi",
+		LastName:  "Mohebbi",
 	}
 
 	// normal test user
@@ -184,7 +184,7 @@ func insertTestData(db *gorm.DB) (goAuth.User, goAuth.User) {
 		Password: "hashed-secret",
 
 		FirstName: "M. Javad",
-		LasttName: "Mohebbi",
+		LastName:  "Mohebbi",
 	}
 
 	// admin

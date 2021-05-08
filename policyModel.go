@@ -3,7 +3,7 @@ package goAuth
 import "gorm.io/gorm"
 
 type Policy struct {
-	Section string `gorm:"not null"`
+	Section string `gorm:"type:nvarchar(100);not null"`
 
 	// Permission Description
 	// ----------------------------------------------
