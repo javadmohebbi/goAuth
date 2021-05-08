@@ -161,7 +161,7 @@ func main() {
 		Password: "hashed-secret", // store password not in clear-text format
 
 		FirstName: "M. Javad",
-		LasttName: "Mohebbi",
+		LastName:  "Mohebbi",
 	}
 	// add admin to the adminUser group
 	userAdmin.Group = append(userAdmin.Group, &adminGroup.Group)
@@ -172,7 +172,7 @@ func main() {
 		Password: "hashed-secret", // store password not in clear-text format
 
 		FirstName: "M. Javad",
-		LasttName: "Mohebbi",
+		LastName:  "Mohebbi",
 	}
 	// add salesuser to the sales group
 	salesUser.Group = append(salesUser.Group, &salesGrp.Group)

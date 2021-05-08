@@ -23,3 +23,7 @@
 
 #vscode
 .vscode
+
+
+**/example/ldap-auth/**
+**/example/ldap-grp/**
