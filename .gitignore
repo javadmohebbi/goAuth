@@ -27,3 +27,5 @@
 
 **/example/ldap-auth/**
 **/example/ldap-grp/**
+
+**/node_module
