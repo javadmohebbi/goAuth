@@ -40,15 +40,38 @@ func main() {
 	// create default user, group, policy
 	migrateDefaultUserAndGroupAndPolicy(db)
 
-	fetchAdmin(db)
+	// fetch admin
+	// u := fetchAdmin(db)
+	// log.Println(u)
+
+	// // // updte admin
+	// updateUser(db, u)
 
 }
 
-func fetchAdmin(db *gorm.DB) {
+func updateUser(db *gorm.DB, u goAuth.User) {
+	u.MetaData = map[string]interface{}{
+		"First Name":    "Mamadian",
+		"Last Name":     "Mamadian toor",
+		"Email Address": "mamad@mam2ad.co",
+		"Birth Date":    "1368/12/07",
+	}
+	u.Password = "newPassword1_"
+	db.Model(&u).Updates(
+		goAuth.User{
+			MetaData: u.MetaData,
+			Password: u.Password,
+		},
+	)
+
+	log.Println(u)
+}
+
+func fetchAdmin(db *gorm.DB) goAuth.User {
 	var u goAuth.User
 	db.Where("username = ?", "admin").First(&u)
 
-	log.Println(u)
+	return u
 }
 
 // create default fields
@@ -132,7 +155,7 @@ func migrateDefaultUserAndGroupAndPolicy(db *gorm.DB) {
 	// admin test user
 	userAdmin := goAuth.User{
 		Username: "admin",
-		Password: "admin", // password will be saved as hashed string
+		Password: "P4$$word", // password will be saved as hashed string
 		MetaData: map[string]interface{}{
 			"Email Address": "admin@example.com",
 			"First Name":    "Dennis",
